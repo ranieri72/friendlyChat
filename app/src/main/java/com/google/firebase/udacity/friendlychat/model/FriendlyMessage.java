@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.firebase.udacity.friendlychat;
+package com.google.firebase.udacity.friendlychat.model;
 
 public class FriendlyMessage {
 
     private String text;
-    private String name;
+    private Friends sender;
+    private Friends recipient;
     private String photoUrl;
 
     public FriendlyMessage() {
     }
 
-    public FriendlyMessage(String text, String name, String photoUrl) {
+    public FriendlyMessage(String text, Friends sender, Friends recipient, String photoUrl) {
         this.text = text;
-        this.name = name;
+        this.sender = sender;
+        this.recipient = recipient;
         this.photoUrl = photoUrl;
     }
 
@@ -38,13 +40,13 @@ public class FriendlyMessage {
         this.text = text;
     }
 
-    public String getName() {
-        return name;
-    }
+    public Friends getSender() { return sender; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public void setSender(Friends sender) { this.sender = sender; }
+
+    public Friends getRecipient() { return recipient; }
+
+    public void setRecipient(Friends recipient) { this.recipient = recipient; }
 
     public String getPhotoUrl() {
         return photoUrl;

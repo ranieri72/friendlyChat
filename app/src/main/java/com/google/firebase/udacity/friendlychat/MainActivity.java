@@ -22,7 +22,6 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.InputFilter;
-import android.text.Spanned;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
@@ -46,13 +45,14 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
-import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.google.firebase.udacity.friendlychat.adapter.FriendsAdapter;
+import com.google.firebase.udacity.friendlychat.adapter.MessageAdapter;
+import com.google.firebase.udacity.friendlychat.model.FriendlyMessage;
+import com.google.firebase.udacity.friendlychat.model.Friends;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -88,13 +88,11 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.sendButton)
     Button mSendButton;
 
-    private MessageAdapter mMessageAdapter;
+    private FriendsAdapter mFriendsAdapter;
     private String mUsername;
-    private DatabaseReference mMessagesDatabaseReference;
     private FirebaseAuth mFirebaseAuth;
     private AuthStateListener mAuthStateListener;
     private ChildEventListener mChildEventListener;
-    private StorageReference mChatPhotosStorageReference;
     private FirebaseRemoteConfig mFirebaseRemoteConfig;
 
     @Override
@@ -107,13 +105,11 @@ public class MainActivity extends AppCompatActivity {
 
         mFirebaseAuth = FirebaseAuth.getInstance();
         mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
-        mMessagesDatabaseReference = FirebaseDatabase.getInstance().getReference().child("messages");
-        mChatPhotosStorageReference = FirebaseStorage.getInstance().getReference().child("chat_photos");
 
         // Initialize message ListView and its adapter
-        List<FriendlyMessage> friendlyMessages = new ArrayList<>();
-        mMessageAdapter = new MessageAdapter(this, R.layout.item_message, friendlyMessages);
-        mMessageListView.setAdapter(mMessageAdapter);
+        List<Friends> friendsList = new ArrayList<>();
+        mFriendsAdapter = new FriendsAdapter(this, R.layout.item_message, friendsList);
+        mMessageListView.setAdapter(mFriendsAdapter);
 
         // Initialize progress bar
         mProgressBar.setVisibility(ProgressBar.INVISIBLE);
