@@ -7,7 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.google.firebase.udacity.friendlychat.model.Friends;
+import com.google.firebase.udacity.friendlychat.model.User;
 
 import java.util.List;
 
@@ -15,9 +15,9 @@ import java.util.List;
  * Created by mtz-5555-transp on 02/08/17.
  */
 
-public class FriendsAdapter extends ArrayAdapter<Friends> {
+public class FriendsAdapter extends ArrayAdapter<User> {
 
-    public FriendsAdapter(Context context, List<Friends> objects) {
+    public FriendsAdapter(Context context, List<User> objects) {
         super(context, 0, objects);
     }
 
@@ -25,7 +25,7 @@ public class FriendsAdapter extends ArrayAdapter<Friends> {
     public View getView(int position, View convertView, ViewGroup parent) {
 
         //1)
-        Friends friends = getItem(position);
+        User user = getItem(position);
 
         //2)
         ViewHolder vh;
@@ -41,7 +41,7 @@ public class FriendsAdapter extends ArrayAdapter<Friends> {
             vh = (ViewHolder) convertView.getTag();
         }
 
-        vh.txtFriend.setText(friends.getName());
+        vh.txtFriend.setText(user.getName());
 
         //4)
         return convertView;

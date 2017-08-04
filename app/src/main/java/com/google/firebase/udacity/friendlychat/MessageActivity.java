@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
@@ -27,6 +28,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig;
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings;
 import com.google.firebase.storage.FirebaseStorage;
@@ -34,7 +36,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.google.firebase.udacity.friendlychat.adapter.MessageAdapter;
 import com.google.firebase.udacity.friendlychat.model.FriendlyMessage;
-import com.google.firebase.udacity.friendlychat.model.Friends;
+import com.google.firebase.udacity.friendlychat.model.User;
 
 import org.parceler.Parcels;
 
@@ -58,6 +60,9 @@ public class MessageActivity extends AppCompatActivity {
     private static final String FRIENDLY_MSG_LENGTH_KEY = "friendly_msg_length";
     private static final String TAG = "MainActivity";
 
+    @BindView(R.id.progressBar)
+    ProgressBar mProgressBar;
+
     @BindView(R.id.messageListView)
     ListView mMessageListView;
 
@@ -70,8 +75,8 @@ public class MessageActivity extends AppCompatActivity {
     @BindView(R.id.sendButton)
     Button mSendButton;
 
-    private Friends mSender;
-    private Friends mRecipient;
+    private User mSender;
+    private User mRecipient;
     private MessageAdapter mMessageAdapter;
     private DatabaseReference mMessagesDatabaseReference;
     private FirebaseAuth mFirebaseAuth;
@@ -79,6 +84,7 @@ public class MessageActivity extends AppCompatActivity {
     private FirebaseRemoteConfig mFirebaseRemoteConfig;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
     private ChildEventListener mChildEventListener;
+    private FirebaseUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,11 +97,10 @@ public class MessageActivity extends AppCompatActivity {
             mRecipient = Parcels.unwrap(parcelable);
         }
 
-        mSender = new Friends(ANONYMOUS);
+        mSender = new User(ANONYMOUS);
 
         mFirebaseAuth = FirebaseAuth.getInstance();
         mFirebaseRemoteConfig = FirebaseRemoteConfig.getInstance();
-        mMessagesDatabaseReference = FirebaseDatabase.getInstance().getReference().child("messages");
         mChatPhotosStorageReference = FirebaseStorage.getInstance().getReference().child("chat_photos");
 
         // Initialize message ListView and its adapter
@@ -103,11 +108,16 @@ public class MessageActivity extends AppCompatActivity {
         mMessageAdapter = new MessageAdapter(this, R.layout.item_message, friendlyMessages);
         mMessageListView.setAdapter(mMessageAdapter);
 
+        // Initialize progress bar
+        mProgressBar.setVisibility(ProgressBar.INVISIBLE);
+
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
+                user = firebaseAuth.getCurrentUser();
                 if (user != null) {
+                    mMessagesDatabaseReference = FirebaseDatabase.getInstance().getReference();
+                    mMessagesDatabaseReference.child("messages").equalTo(mSender.getName() + "_" + mRecipient.getName());
                     onSignedInInitialize(user.getDisplayName());
                 } else {
                     onSignedOutCleanup();
@@ -271,7 +281,6 @@ public class MessageActivity extends AppCompatActivity {
     }
 
     private void writeNewMessage(FriendlyMessage friendlyMessage) {
-        //String key = mMessagesDatabaseReference.child("messages").push().getKey();
         mMessagesDatabaseReference.push().setValue(friendlyMessage);
     }
 
@@ -298,6 +307,5 @@ public class MessageActivity extends AppCompatActivity {
         Long friendly_msg_length = mFirebaseRemoteConfig.getLong(FRIENDLY_MSG_LENGTH_KEY);
         mMessageEditText.setFilters(new InputFilter[]{new InputFilter.LengthFilter(friendly_msg_length.intValue())});
         Log.d(TAG, FRIENDLY_MSG_LENGTH_KEY + " = " + friendly_msg_length);
-        Toast.makeText(MessageActivity.this, FRIENDLY_MSG_LENGTH_KEY + " = " + friendly_msg_length, Toast.LENGTH_LONG).show();
     }
 }

@@ -38,13 +38,15 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.udacity.friendlychat.adapter.FriendsAdapter;
-import com.google.firebase.udacity.friendlychat.model.Friends;
+import com.google.firebase.udacity.friendlychat.model.User;
 
 import org.parceler.Parcels;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -66,12 +68,14 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.newFriendEditText)
     EditText mNewFriendEditText;
 
-    private Friends mSender;
+    private User mSender;
     private FriendsAdapter mFriendsAdapter;
     private FirebaseAuth mFirebaseAuth;
     private AuthStateListener mAuthStateListener;
     private ChildEventListener mChildEventListener;
+    private DatabaseReference mUserDatabaseReference;
     private DatabaseReference mFriendsDatabaseReference;
+    private FirebaseUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,14 +83,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        mSender = new Friends(ANONYMOUS);
+        mSender = new User(ANONYMOUS);
 
         mFirebaseAuth = FirebaseAuth.getInstance();
-        mFriendsDatabaseReference = FirebaseDatabase.getInstance().getReference().child("friends");
+        mUserDatabaseReference = FirebaseDatabase.getInstance().getReference().child("users");
 
         // Initialize message ListView and its adapter
-        List<Friends> friendsList = new ArrayList<>();
-        mFriendsAdapter = new FriendsAdapter(this, friendsList);
+        List<User> userList = new ArrayList<>();
+        mFriendsAdapter = new FriendsAdapter(this, userList);
         mFriendsListView.setAdapter(mFriendsAdapter);
 
         // Initialize progress bar
@@ -95,8 +99,9 @@ public class MainActivity extends AppCompatActivity {
         mAuthStateListener = new AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
+                user = firebaseAuth.getCurrentUser();
                 if (user != null) {
+                    mFriendsDatabaseReference = FirebaseDatabase.getInstance().getReference().child("/users/" + user.getUid() + "/friends");
                     onSignedInInitialize(user.getDisplayName());
                 } else {
                     onSignedOutCleanup();
@@ -168,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
             mChildEventListener = new ChildEventListener() {
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                    Friends friend = dataSnapshot.getValue(Friends.class);
+                    User friend = dataSnapshot.getValue(User.class);
                     mFriendsAdapter.add(friend);
                 }
 
@@ -196,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
     public void submit(View view) {
         switch (view.getId()) {
             case R.id.newFriendButton:
-                newFriend(new Friends(mNewFriendEditText.getText().toString()));
+                newFriend(new User(mNewFriendEditText.getText().toString()));
                 mNewFriendEditText.setText("");
                 break;
         }
@@ -204,15 +209,16 @@ public class MainActivity extends AppCompatActivity {
 
     @OnItemClick(R.id.friendsListView)
     void onItemSelected(int position) {
-        Toast.makeText(this, String.valueOf(position), Toast.LENGTH_LONG).show();
         Intent it = new Intent(this, MessageActivity.class);
         it.putExtra("friends", Parcels.wrap(mFriendsAdapter.getItem(position)));
         startActivity(it);
     }
 
-    private void newFriend(Friends friend) {
-        Toast.makeText(this, friend.getName(), Toast.LENGTH_LONG).show();
-        //mFriendsDatabaseReference.push().setValue(friend);
+    private void newFriend(User friend) {
+        mSender.getFriends().add(friend);
+        Map<String, Object> childUpdates = new HashMap<>();
+        childUpdates.put(user.getUid(), mSender);
+        mUserDatabaseReference.updateChildren(childUpdates);
     }
 
     @Override

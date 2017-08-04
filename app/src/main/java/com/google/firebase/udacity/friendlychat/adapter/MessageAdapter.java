@@ -43,7 +43,7 @@ public class MessageAdapter extends ArrayAdapter<FriendlyMessage> {
             photoImageView.setVisibility(View.GONE);
             messageTextView.setText(message.getText());
         }
-        authorTextView.setText(message.getSender().getName());
+        //authorTextView.setText(message.getSender().getName());
 
         return convertView;
     }
