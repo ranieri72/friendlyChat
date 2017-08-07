@@ -1,5 +1,7 @@
 package com.google.firebase.udacity.friendlychat.model;
 
+import com.google.firebase.database.Exclude;
+
 import org.parceler.Parcel;
 
 import java.util.ArrayList;
@@ -25,10 +27,12 @@ public class User {
         this.setName(name);
     }
 
+    @Exclude
     public String getId() {
         return id;
     }
 
+    @Exclude
     public void setId(String id) {
         this.id = id;
     }

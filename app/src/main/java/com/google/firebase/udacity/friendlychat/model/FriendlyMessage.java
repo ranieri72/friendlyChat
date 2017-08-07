@@ -15,8 +15,12 @@
  */
 package com.google.firebase.udacity.friendlychat.model;
 
+import com.google.firebase.database.Exclude;
+
 public class FriendlyMessage {
 
+    @Exclude
+    private String id;
     private String text;
     private String senderRecipient;
     private String photoUrl;
@@ -26,8 +30,16 @@ public class FriendlyMessage {
 
     public FriendlyMessage(String text, User sender, User recipient, String photoUrl) {
         this.text = text;
-        this.senderRecipient = sender.getName() + "_" + recipient.getName();
+        this.senderRecipient = sender.getId() + "_" + recipient.getId();
         this.photoUrl = photoUrl;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getText() {
@@ -53,6 +65,4 @@ public class FriendlyMessage {
     public void setPhotoUrl(String photoUrl) {
         this.photoUrl = photoUrl;
     }
-
-
 }

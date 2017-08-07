@@ -37,6 +37,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.udacity.friendlychat.adapter.FriendsAdapter;
 import com.google.firebase.udacity.friendlychat.model.User;
 
@@ -73,9 +75,9 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth mFirebaseAuth;
     private AuthStateListener mAuthStateListener;
     private ChildEventListener mChildEventListener;
-    private DatabaseReference mUserDatabaseReference;
     private DatabaseReference mFriendsDatabaseReference;
     private FirebaseUser user;
+    private DatabaseReference mUserDatabaseReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,7 +88,6 @@ public class MainActivity extends AppCompatActivity {
         mSender = new User(ANONYMOUS);
 
         mFirebaseAuth = FirebaseAuth.getInstance();
-        mUserDatabaseReference = FirebaseDatabase.getInstance().getReference().child("users");
 
         // Initialize message ListView and its adapter
         List<User> userList = new ArrayList<>();
@@ -101,6 +102,13 @@ public class MainActivity extends AppCompatActivity {
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 user = firebaseAuth.getCurrentUser();
                 if (user != null) {
+                    mUserDatabaseReference = FirebaseDatabase.getInstance().getReference().child("users");
+
+                    mSender.setName(user.getDisplayName());
+                    Map<String, Object> childUpdates = new HashMap<>();
+                    childUpdates.put(user.getUid(), mSender);
+                    mUserDatabaseReference.updateChildren(childUpdates);
+
                     mFriendsDatabaseReference = FirebaseDatabase.getInstance().getReference().child("/users/" + user.getUid() + "/friends");
                     onSignedInInitialize(user.getDisplayName());
                 } else {
@@ -215,10 +223,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void newFriend(User friend) {
-        mSender.getFriends().add(friend);
-        Map<String, Object> childUpdates = new HashMap<>();
-        childUpdates.put(user.getUid(), mSender);
-        mUserDatabaseReference.updateChildren(childUpdates);
+        Query query1 = mUserDatabaseReference.orderByChild("name").equalTo(friend.getName());
+        query1.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                User user = dataSnapshot.getValue(User.class);
+
+                if (user != null) {
+                    mFriendsDatabaseReference.push().setValue(user);
+                    Toast.makeText(MainActivity.this, "Amigo cadastrado.", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Usuário não existe!", Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Toast.makeText(MainActivity.this, "Falha na conexão ao servidor!", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     @Override
